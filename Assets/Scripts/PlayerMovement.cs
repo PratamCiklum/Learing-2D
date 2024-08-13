@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] LayerMask groundLayer;
     [SerializeField] LayerMask wallLayer;
-    [SerializeField] float speed;
-    [SerializeField] float jumpPower;
-    [SerializeField] float pogoJumpPower;
+    const float speed = 10f;
+    const float jumpPower = 12f;
+    const float pogoJumpPower = 6f;
     public static float playerHealth;
 
 
@@ -19,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     private BoxCollider2D boxCollider;
     private SpriteRenderer spriteRenderer;
     private Animator anim;
+    private InputSystem inputSystem;
 
     private int maxJump = 2;
     private int jumpCount;
@@ -32,7 +34,7 @@ public class PlayerMovement : MonoBehaviour
     private float jumpBufferTimer = 0.1f;
     private float horizontalInput;
     private float jumpBufferCounter;
-
+    private bool jumpButtonReleased = true;
 
     private void Awake()
     {
@@ -40,6 +42,10 @@ public class PlayerMovement : MonoBehaviour
         boxCollider = GetComponent<BoxCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
+        inputSystem = new InputSystem();
+
+        inputSystem.Player.Enable();
+        inputSystem.Player.Jump.started += Jump;
         playerHealth = 3;
 
         jumpCount = 0;
@@ -47,46 +53,18 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
+
     void Update()
     {
-        if (Mathf.Abs(transform.position.x) > xRange)  // Constrain for xRange
+        if (inputSystem.Player.Jump.phase == InputActionPhase.Waiting)
+        {
+            //Debug.Log(inputSystem.Player.Jump.phase == InputActionPhase.Waiting);
+            jumpButtonReleased = true;
+        }
+
+        if (Mathf.Abs(transform.position.x) > xRange)  // Constrain for xRange (Boundary)
         {
             transform.position = new Vector3(Mathf.Sign(transform.position.x) * xRange, transform.position.y, transform.position.z);
-        }
-
-        if (jumpCount >= maxJump)
-        {
-            if (jumpBuffered)
-            {
-                jumpBufferCounter += Time.deltaTime;
-                if (jumpBufferCounter >= jumpBufferTimer)
-                {
-                    jumpBuffered = false; // Reset the buffer if time has expired
-                }
-                else if (IsGrounded()) // Execute the jump if grounded and buffered
-                {
-                    Jump();
-                    jumpCount = 1;
-                    jumpBuffered = false;
-                }
-            }
-        }
-        else
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                Jump();
-                jumpCount++;
-                //jumpBuffered = true;
-            }
-        }
-
-
-
-        if (Input.GetKeyDown(KeyCode.Space) && jumpCount >= maxJump)
-        {
-            jumpBuffered = true;
-            jumpBufferCounter = 0;
         }
 
         if (IsGrounded() && playerRb.velocity.y <= 0.1f)   //Checks if player is on the ground and not jumping
@@ -95,10 +73,61 @@ public class PlayerMovement : MonoBehaviour
             anim.SetBool("is_jumping", false);
         }
 
-        //Debug.Log("Jump Count : " + jumpCount);
-        //trail Renderer
-        //isMoving = playerRb.velocity != Vector2.zero;
-        //trailRenderer.enabled = isMoving;
+    }
+
+    private void FixedUpdate()
+    {
+        horizontalMovement();        //logic for horizontal movement
+
+        RunAnimation();              //set animation for running
+        
+        BufferJump();                //add a buffer jump
+        
+        FlipPlayer();                //flip sprite based on its direction
+        
+        AffectGravity();             //Adds Max Fall Speed and faster falling
+
+    }
+
+    //Buffer time which enables player to jump even if he presses jump before he lands making it a bit responsive
+    private void BufferJump()
+    {
+        if (jumpBuffered)
+        {
+            jumpBufferCounter += Time.deltaTime;
+            if (jumpBufferCounter >= jumpBufferTimer)
+            {
+                jumpBuffered = false; // Reset the buffer if time has expired
+            }
+            else if (IsGrounded()) // Execute the jump if grounded and buffered
+            {
+                onJump();
+                jumpCount = 1;
+                jumpBuffered = false;
+            }
+        }
+    }
+    private void Jump(InputAction.CallbackContext obj)
+    {
+        Debug.Log(obj);
+        if (obj.phase == InputActionPhase.Started && jumpButtonReleased)
+        {
+            jumpButtonReleased = false;
+            if (jumpCount >= maxJump)     //
+            {
+                jumpBuffered = true;
+                jumpBufferCounter = 0;
+
+            }
+            else
+            {
+                onJump();
+                jumpCount++;
+                //jumpBuffered = true;
+
+            }
+        }
+
     }
 
     public void onDamage()
@@ -114,15 +143,11 @@ public class PlayerMovement : MonoBehaviour
 
     public void pogoMovement()
     {
-        playerRb.velocity = new Vector2(playerRb.velocity.x, pogoJumpPower);
-        anim.SetBool("is_jumping", true);
+        onJump(power: pogoJumpPower);
     }
-    private void FixedUpdate()
+
+    private void RunAnimation()
     {
-        horizontalInput = Input.GetAxis("Horizontal");
-        verticalInput = Input.GetAxis("Vertical");
-        playerRb.velocity = new Vector2(horizontalInput * speed, playerRb.velocity.y); // horizontal Movement
-        //Debug.Log(Mathf.Abs(playerRb.velocity.x));
         if (Mathf.Abs(playerRb.velocity.x) > 0)
         {
             anim.SetFloat("speed", 0.6f);
@@ -131,11 +156,15 @@ public class PlayerMovement : MonoBehaviour
         {
             anim.SetFloat("speed", 0.3f);
         }
-
-        FlipPlayer();               //flip sprite based on its direction
-        AffectGravity();             //Adds Max Fall Speed and faster falling
-
     }
+
+    // horizontal Movement
+    private void horizontalMovement()
+    {
+        horizontalInput = inputSystem.Player.Movement.ReadValue<float>();
+        playerRb.velocity = new Vector2(horizontalInput * speed, playerRb.velocity.y);
+    }
+
     private void FlipPlayer()
     {
         if (horizontalInput > 0.1f)
@@ -143,6 +172,7 @@ public class PlayerMovement : MonoBehaviour
         else if (horizontalInput < -0.1)
             spriteRenderer.flipX = true;
     }
+
     private void AffectGravity()
     {
         if (playerRb.velocity.y < -maxVelocityY)        //Max Fall Speed
@@ -158,12 +188,13 @@ public class PlayerMovement : MonoBehaviour
             playerRb.gravityScale = initialGravity;
         }
     }
-    private void Jump()
-    {
-        playerRb.velocity = new Vector2(playerRb.velocity.x, jumpPower);
-        anim.SetBool("is_jumping", true);
 
+    private void onJump(float power = jumpPower)
+    {
+        playerRb.velocity = new Vector2(playerRb.velocity.x, power);
+        anim.SetBool("is_jumping", true);
     }
+
     //checks if player is touching the ground
     private bool IsGrounded()
     {
