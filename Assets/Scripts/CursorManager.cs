@@ -7,6 +7,7 @@ public class CursorManager : MonoBehaviour
 
     [SerializeField] Texture2D cursor;
     private Vector2 cursorHotspot;
+
     // Start is called before the first frame update
     void Start()
     {

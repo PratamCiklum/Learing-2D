@@ -15,10 +15,8 @@ public class SceneLoader : MonoBehaviour
     [SerializeField] Animator anim; 
     private void Start()
     {
-
         minWaitTime = 5;
         StartCoroutine(loadScreenTime());
-        //StopCoroutine(loadScreenTime());
     }
 
     
@@ -28,24 +26,12 @@ public class SceneLoader : MonoBehaviour
         yield return new WaitForSecondsRealtime(minWaitTime);
         anim.SetTrigger("Start");
         StartCoroutine(StartCrossFadeAnimation());
-
-
     }
 
     IEnumerator StartCrossFadeAnimation()
     {
         yield return new WaitForSecondsRealtime(animationTime);
-        operation = SceneManager.LoadSceneAsync(LoadingData.sceneToLoad);
-        if (operation == null)
-        {
-            Debug.Log("no opeartion found");
-            yield break;
-        }
-        while (!operation.isDone)
-        {
-            // Optionally, you can update a loading UI here
-            yield return null;
-        }
+        SceneManager.LoadSceneAsync(LoadingData.sceneToLoad);
     }
 
 }

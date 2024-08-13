@@ -30,9 +30,14 @@ public class BulletMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            //Debug.Log("Health Reduced");
-            collision.gameObject.GetComponent<PlayerMovement>().onDamage();
-            gameObject.SetActive(false);
+            PlayerMovement player = GameObject.Find("Player").GetComponent<PlayerMovement>();
+
+            if (!player.isPlayerHit)
+            {
+                collision.gameObject.GetComponent<PlayerMovement>().onDamage();
+                player.isPlayerHit = true;
+                gameObject.SetActive(false);
+            }
         }
     }
 }

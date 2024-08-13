@@ -5,13 +5,15 @@ using UnityEngine;
 public abstract class Enemy : MonoBehaviour
 {
     [SerializeField] int initialHealth;
-    //[SerializeField] GameObject child;
+    [SerializeField] int damage;
+
     private CapsuleCollider2D capsuleCollider;
     private Animator anime;
-    private int health;
-    [SerializeField] int damage;
-    protected Vector3 directionToPlayer;
     protected ObjectPooler objectPooler;
+
+    protected Vector3 directionToPlayer;
+    
+    private int health;
     protected bool isDeathAnimationPlaying = false;
 
     // Start is called before the first frame update
@@ -24,8 +26,6 @@ public abstract class Enemy : MonoBehaviour
 
     private void OnEnable()
     {
-        //anime.SetBool("is_dead", false);
-        //anime.SetBool("is_dead", false);
         ResetHealth();
     }
     private void OnTriggerEnter2D(Collider2D collision)
@@ -33,7 +33,12 @@ public abstract class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Player"))
         {
             gameObject.SetActive(false);
-            collision.gameObject.GetComponent<PlayerMovement>().onDamage();
+            PlayerMovement player = GameObject.Find("Player").GetComponent<PlayerMovement>();
+            if (!player.isPlayerHit)
+            {
+                collision.gameObject.GetComponent<PlayerMovement>().onDamage();
+                player.isPlayerHit = true;
+            }
         }
         else if (collision.gameObject.CompareTag("Player Bullet"))
         {

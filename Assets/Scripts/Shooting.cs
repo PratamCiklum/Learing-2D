@@ -9,16 +9,12 @@ public class Shooting : MonoBehaviour
     [SerializeField] Transform bulletTransform;
     [SerializeField] bool canFire;
     [SerializeField] float timeBetweenFire;
-    //[SerializeField] GameObject player;
-
 
     private ObjectPooler objectPooler;
     private Camera mainCamera;
     private Vector3 mousePos;
     private float fireTime;
-    private MenuManager menuManager;
-    //private Animator anim;
-    
+    private MenuManager menuManager;    
 
     // Start is called before the first frame update
     void Start()
@@ -55,15 +51,10 @@ public class Shooting : MonoBehaviour
 
         if(Input.GetMouseButton(0) && canFire)
         {
-            //hello
             canFire = false;
             Vector3 direction = (mousePos - bulletTransform.position).normalized;
-            //anim.SetTrigger("attack");
-            //Debug.Log(direction + "Direction");
-            //Debug.Log(direction.normalized + "Normalized Direction");
-
             objectPooler.spawnFromPool("Player Bullet", bulletTransform.position, Quaternion.identity, (Vector2)direction);
-            //Instantiate(bullet, bulletTransform.position, Quaternion.identity);
+
         }
     }
 }

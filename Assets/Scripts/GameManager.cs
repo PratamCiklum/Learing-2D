@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject endGameScreen;
     [SerializeField] TextMeshProUGUI livesTest;
 
+    private PlayerMovement player;
+
     private bool isDead;
     // Update is called once per frame
     void Update()
@@ -20,9 +22,9 @@ public class GameManager : MonoBehaviour
             isGamePaused = !isGamePaused;
             PauseGame();
         }
-        isDead = PlayerMovement.playerHealth <= 0;
+        isDead = player.playerHealth <= 0;
 
-        livesTest.text = "Lives : " + PlayerMovement.playerHealth;
+        livesTest.text = "Lives : " + player.playerHealth;
 
         EndGame();
 
@@ -31,6 +33,11 @@ public class GameManager : MonoBehaviour
     {
         isGamePaused = false;
         Time.timeScale = 1;
+    }
+
+    private void Awake()
+    {
+        player = GameObject.Find("Player").GetComponent<PlayerMovement>();
     }
 
     void EndGame()

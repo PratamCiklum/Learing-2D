@@ -16,7 +16,9 @@ public class TipToolManager : MonoBehaviour
         "Watch enemy patterns and movements to plan your attacks effectively.",
         "Utilize every ability you have to survive and score higher.",
     };
+
     [SerializeField] TextMeshProUGUI tipText;
+
     private float tipChangeTime = 5f;
     private float timeElapsed;
 

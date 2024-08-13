@@ -5,10 +5,13 @@ using UnityEngine;
 public class Shooter : Enemy
 {
     [SerializeField] Transform bulletTransform;
-    private Vector2 directionToLook;
-    private GameObject player;
     [SerializeField] float timeBetweenFire;
     [SerializeField] bool canFire;
+
+    private Vector2 directionToLook;
+
+    private GameObject player;
+    
     private float fireTime = 0;
 
     //private ObjectPooler ObjectPooler;

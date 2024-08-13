@@ -5,13 +5,15 @@ using UnityEngine.Pool;
 
 public class SpawnManager : MonoBehaviour
 {
+    private ObjectPooler objectPooler;
+
     private float yPos = 4;
     private float yNeg = 1;
     private float xPos = 7.75f;
-    private ObjectPooler objectPooler;
     private float spawnRate = 2;
     private float delay = 3;
     private string[] enemyName = { "Shooter", "Attacker" };
+
     // Start is called before the first frame update
     void Start()
 
