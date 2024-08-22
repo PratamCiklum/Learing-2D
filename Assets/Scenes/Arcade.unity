@@ -1427,7 +1427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16430f563b49186479a98b6e5b8151af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetScene: Main Menu
+  targetScene: Main Menu For WEBGL
   anim: {fileID: 1362820342}
 --- !u!114 &883498118
 MonoBehaviour:
@@ -1936,6 +1936,10 @@ PrefabInstance:
       propertyPath: anim
       value: 
       objectReference: {fileID: 1362820342}
+    - target: {fileID: 8273355256924337717, guid: 774c655e71380aa44bb8cba718a6e5ca, type: 3}
+      propertyPath: targetScene
+      value: Main Menu For WEBGL
+      objectReference: {fileID: 0}
     - target: {fileID: 8538233940701197941, guid: 774c655e71380aa44bb8cba718a6e5ca, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -2019,6 +2023,10 @@ PrefabInstance:
     - target: {fileID: 8790413688785059667, guid: 774c655e71380aa44bb8cba718a6e5ca, type: 3}
       propertyPath: m_Name
       value: Controls Canvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 8790413688785059667, guid: 774c655e71380aa44bb8cba718a6e5ca, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4634,8 +4642,8 @@ SceneRoots:
   - {fileID: 568044658}
   - {fileID: 2139143835}
   - {fileID: 996665892}
-  - {fileID: 1212688712}
   - {fileID: 226574352}
   - {fileID: 389225652}
   - {fileID: 1450527278}
   - {fileID: 942038734}
+  - {fileID: 1212688712}
