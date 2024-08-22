@@ -5,12 +5,15 @@ using System.Security.Cryptography.X509Certificates;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Processors;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] LayerMask groundLayer;
     [SerializeField] LayerMask wallLayer;
-
+    [SerializeField] AudioClip jump;
+    [SerializeField] AudioClip dash;
     const float speed = 10f;
     const float jumpPower = 12f;
     const float pogoJumpPower = 6f;
@@ -22,10 +25,9 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D playerRb;
     private BoxCollider2D boxCollider;
     private SpriteRenderer spriteRenderer;
+    private AudioSource audioSource;
+    private GatherInput gi;
     private Animator anim;
-    private InputSystem inputSystem;
-
-    private Vector2 input;
 
     private int maxJump = 2;
     private int jumpCount;
@@ -42,7 +44,6 @@ public class PlayerMovement : MonoBehaviour
     private float dashTime = 0.2f;
     private float dashCooldownTime = 1f;
     private float invincibilityAfterHit = 0.8f;
-    private bool jumpButtonReleased = true;
     private bool isDashing;
     private bool canDash;
     private float timer;
@@ -53,8 +54,8 @@ public class PlayerMovement : MonoBehaviour
         boxCollider = GetComponent<BoxCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
-        inputSystem = new InputSystem();
-
+        gi = GetComponent<GatherInput>();
+        audioSource = GetComponent<AudioSource>();
         playerHealth = 3;
         jumpCount = 0;
         timer = 0;
@@ -64,21 +65,11 @@ public class PlayerMovement : MonoBehaviour
         isPlayerHit = false;
     }
 
-    private void OnEnable()
-    {
-        inputSystem.Player.Enable();
-        inputSystem.Player.Jump.started += Jump;
-        inputSystem.Player.Dash.started += Dash_Started;
-    }
 
-    private void OnDisable()
-    {
-        inputSystem.Player.Disable();
-    }
 
-    private void Dash_Started(InputAction.CallbackContext obj)
+    public void Dash_Started(InputAction.CallbackContext obj)
     {
-        if (canDash && input != Vector2.zero)
+        if (canDash && new Vector2(gi.inputHorizontal, gi.inputVertical) != Vector2.zero && playerRb.velocity != Vector2.zero)
         {
             StartCoroutine(Dash());
         }
@@ -90,7 +81,8 @@ public class PlayerMovement : MonoBehaviour
         isDashing = true;
         float orignalGravity = playerRb.gravityScale;
         playerRb.gravityScale = 0;
-        playerRb.velocity = input.normalized * dashPower;
+        playerRb.velocity = new Vector2(gi.inputHorizontal, gi.inputVertical).normalized * dashPower;
+        audioSource.PlayOneShot(dash, 1f);
         yield return new WaitForSeconds(dashTime);
         isDashing = false;
         playerRb.gravityScale = orignalGravity;
@@ -101,6 +93,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        //check if player is hit and make him invincible for certain period of time
         if (isPlayerHit)
         {
             timer += Time.deltaTime;
@@ -111,34 +104,32 @@ public class PlayerMovement : MonoBehaviour
             }
 
         }
-        if (inputSystem.Player.Jump.phase == InputActionPhase.Waiting)
-        {
-            jumpButtonReleased = true;
-        }
 
-        if (Mathf.Abs(transform.position.x) > xRange)  // Constrain for xRange (Boundary)
-        {
-            transform.position = new Vector3(Mathf.Sign(transform.position.x) * xRange, transform.position.y, transform.position.z);
-        }
+        HorizontalConstrain();
 
-        if (IsGrounded() && playerRb.velocity.y <= 0.1f)   //Checks if player is on the ground and not jumping
+        //Checks if player is on the ground and not jumping
+        if (IsGrounded() && playerRb.velocity.y <= 0.1f)
         {
             jumpCount = 0;
             anim.SetBool("is_jumping", false);
         }
 
-        FlipPlayer();                //flip sprite based on its direction
 
+        FlipPlayer();
+
+
+        //enable or disable BoxCollider based on if player is Dashing
         gameObject.GetComponent<BoxCollider2D>().enabled = !isDashing;
         transform.GetChild(1).gameObject.GetComponent<BoxCollider2D>().enabled = !isDashing;
 
     }
 
+
     private void FixedUpdate()
     {
         if (isDashing) return;       //dont do anything if the player is dashing
 
-        horizontalMovement();        //logic for horizontal movement
+        Horizontal_Movement();
 
         RunAnimation();              //set animation for running
 
@@ -147,12 +138,18 @@ public class PlayerMovement : MonoBehaviour
         AffectGravity();             //Adds Max Fall Speed and faster falling
 
     }
+    private void HorizontalConstrain()
+    {
+        if (Mathf.Abs(transform.position.x) > xRange)  // Constrain for xRange (Boundary)
+        {
+            transform.position = new Vector3(Mathf.Sign(transform.position.x) * xRange, transform.position.y, transform.position.z);
+        }
+    }
 
     // horizontal Movement
-    private void horizontalMovement()
+    private void Horizontal_Movement()
     {
-        input = inputSystem.Player.Movement.ReadValue<Vector2>();
-        playerRb.velocity = new Vector2(input.x * speed, playerRb.velocity.y);
+        playerRb.velocity = new Vector2(gi.inputHorizontal * speed, playerRb.velocity.y);
     }
 
     private void RunAnimation()
@@ -202,31 +199,29 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void Jump(InputAction.CallbackContext obj)
+    public void Jump(InputAction.CallbackContext obj)
     {
         if (isDashing) return;
-        if (obj.phase == InputActionPhase.Started && jumpButtonReleased)
+
+        if (jumpCount >= maxJump)     //
         {
-            jumpButtonReleased = false;
-            if (jumpCount >= maxJump)     //
-            {
-                jumpBuffered = true;
-                jumpBufferCounter = 0;
+            jumpBuffered = true;
+            jumpBufferCounter = 0;
 
-            }
-            else
-            {
-                onJump();
-                jumpCount++;
-                //jumpBuffered = true;
+        }
+        else
+        {
+            onJump();
+            jumpCount++;
+            //jumpBuffered = true;
 
-            }
         }
 
     }
 
     private void onJump(float power = jumpPower)
     {
+        audioSource.PlayOneShot(jump, 1f);
         playerRb.velocity = new Vector2(playerRb.velocity.x, power);
         anim.SetBool("is_jumping", true);
     }
@@ -249,18 +244,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-
-
     private void FlipPlayer()
     {
-        if (input.x > 0.1f)
+        if (gi.inputHorizontal > 0.1f)
             spriteRenderer.flipX = false;
-        else if (input.x < -0.1)
+        else if (gi.inputHorizontal < -0.1)
             spriteRenderer.flipX = true;
     }
 
-
-    //checks if player is touching the ground
     private bool IsGrounded()
     {
         RaycastHit2D raycastHit2D = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.1f, groundLayer);

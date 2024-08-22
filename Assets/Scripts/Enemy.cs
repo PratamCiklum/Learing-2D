@@ -6,11 +6,14 @@ public abstract class Enemy : MonoBehaviour
 {
     [SerializeField] int initialHealth;
     [SerializeField] int damage;
+    [SerializeField] AudioClip deathSound;
 
     private CapsuleCollider2D capsuleCollider;
     private Animator anime;
     protected ObjectPooler objectPooler;
-
+    protected PlayerMovement player;
+    private KillToScore scoreCount;
+    private AudioSource audioSource;
     protected Vector3 directionToPlayer;
     
     private int health;
@@ -22,6 +25,8 @@ public abstract class Enemy : MonoBehaviour
         objectPooler = ObjectPooler.Instance;
         anime = GetComponent<Animator>();
         capsuleCollider = GetComponent<CapsuleCollider2D>();
+        player = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
@@ -33,7 +38,7 @@ public abstract class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Player"))
         {
             gameObject.SetActive(false);
-            PlayerMovement player = GameObject.Find("Player").GetComponent<PlayerMovement>();
+
             if (!player.isPlayerHit)
             {
                 collision.gameObject.GetComponent<PlayerMovement>().onDamage();
@@ -51,9 +56,11 @@ public abstract class Enemy : MonoBehaviour
         health -= damage;
         if (health <= 0)
         {
+            audioSource.PlayOneShot(deathSound);
             anime.SetBool("is_dead", true);
             isDeathAnimationPlaying = true;
             StartCoroutine(HandleDeath());
+            KillToScore.score += 100;
         }
     }
 

@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
 {
     public static bool isGamePaused;
 
-    [SerializeField] GameObject pauseSceen;
+    //[SerializeField] GameObject pauseSceen;
     [SerializeField] GameObject endGameScreen;
     [SerializeField] TextMeshProUGUI livesTest;
 
@@ -17,10 +17,13 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (isGamePaused)
         {
-            isGamePaused = !isGamePaused;
-            PauseGame();
+            Time.timeScale = 0;
+        }
+        else
+        {
+            Time.timeScale = 1;
         }
         isDead = player.playerHealth <= 0;
 
@@ -46,20 +49,14 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0;
         }
+        HighscoreTable.AddHighscoreEntry(score: KillToScore.score, name: PlayerName.playerName ?? "Player");
         endGameScreen.SetActive(isDead);
     }
 
     void PauseGame()
     {
-        if (isGamePaused)
-        {
-            Time.timeScale = 0;
-        }
-        else
-        {
-            Time.timeScale = 1;
-        }
-        pauseSceen.SetActive(isGamePaused);
+
+        //pauseSceen.SetActive(isGamePaused);
 
     }
 

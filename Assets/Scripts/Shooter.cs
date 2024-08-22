@@ -10,16 +10,12 @@ public class Shooter : Enemy
 
     private Vector2 directionToLook;
 
-    private GameObject player;
-    
+
     private float fireTime = 0;
 
     //private ObjectPooler ObjectPooler;
     // Start is called before the first frame update
-    void Awake()
-    {
-        player = GameObject.Find("Player");
-    }
+
 
 
     protected override void Attack()

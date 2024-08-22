@@ -4,12 +4,7 @@ using UnityEngine;
 
 public class Attacker : Enemy
 {
-    private GameObject player;
-    // Start is called before the first frame update
-    void Awake()
-    {
-        player = GameObject.Find("Player");
-    }
+
     // Update is called once per frame
     void Update()
     {
